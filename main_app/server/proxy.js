@@ -220,17 +220,17 @@ Use this knowledge to give specific accurate advice.\n`;
         model: 'llama-3.1-8b-instant',
         messages: [{
           role: 'user',
-          content: `You are a friendly AI health assistant. Analyze the patient data and give appropriate advice.
+          content: `You are a friendly AI health assistant. Analyze the patient data and give appropriate advice based on severity.
 
 Patient Profile: ${profileText || 'Not provided'}
 Patient Symptoms: ${symptoms}
 Additional Notes: ${notes || 'None'}
 Vitals from IoT sensors: ${vitalsText}
 ${ragContext}
-RULES:
-- LOW risk: give specific Ayurvedic home remedies only. Do NOT say visit doctor.
-- MEDIUM risk: suggest OTC medicines + home care. Suggest doctor only if symptoms persist.
-- HIGH risk: strongly recommend doctor or call 108 ambulance immediately.
+IMPORTANT RULES:
+- For LOW risk / mild symptoms (mild fever, cold, fatigue, headache): suggest home remedies and Ayurvedic tips like tulsi tea, ginger, honey, rest. Do NOT say visit doctor.
+- For MEDIUM risk (moderate fever, vomiting, breathlessness): suggest OTC medicines + rest. Only suggest doctor if symptoms worsen.
+- For HIGH risk (chest pain, severe symptoms, very abnormal vitals): strongly recommend visiting doctor or call 108 ambulance immediately.
 - Use the knowledge base remedies provided above for accurate specific advice.
 
 Respond ONLY with a JSON object (no markdown, no backticks):

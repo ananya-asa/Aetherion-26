@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
 
 # dependencies
@@ -43,6 +44,10 @@ app-example
 /android
 .env
 node_modules/
+=======
+node_modules/
+.env
+>>>>>>> origin/ai_model
 .env
 *.env
 server/.env
