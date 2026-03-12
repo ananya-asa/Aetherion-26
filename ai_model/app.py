@@ -1,5 +1,4 @@
 import os
-sed -i '1s/^/import os\n/' app.py
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import joblib
@@ -27,8 +26,6 @@ PROFESSION_MAP = {
 }
 
 # health_risk after LabelEncoder: high=0, low=1
-# So prediction=0 means HIGH risk, prediction=1 means LOW risk
-
 def yes_no(val):
     if isinstance(val, bool):
         return 1 if val else 0
@@ -63,13 +60,12 @@ def predict():
         prediction = model.predict(input_data)[0]
         probabilities = model.predict_proba(input_data)[0]
 
-        # class 0 = high risk (bad), class 1 = low risk (good)
         high_risk_prob = round(probabilities[0] * 100, 1)
         low_risk_prob = round(probabilities[1] * 100, 1)
 
         print(f'Prediction: {prediction}, High risk prob: {high_risk_prob}%, Low risk prob: {low_risk_prob}%')
 
-        if prediction == 1:  # low risk = good health
+        if prediction == 1:
             if low_risk_prob > 70:
                 status = 'Excellent Health'
                 emoji = '💪'
@@ -78,7 +74,7 @@ def predict():
                 status = 'Good Health'
                 emoji = '😊'
                 message = 'You are healthy. Minor improvements can help.'
-        else:  # prediction == 0 = high risk
+        else:
             if high_risk_prob > 75:
                 status = 'Poor Health'
                 emoji = '😰'
@@ -105,5 +101,5 @@ def health():
     return jsonify({'status': 'ok'})
 
 if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)
