@@ -1,24 +1,44 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import 'react-native-reanimated';
-
-import { useColorScheme } from '@/hooks/use-color-scheme';
-
-export const unstable_settings = {
-  anchor: '(tabs)',
-};
+import { Tabs } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { AppProvider } from '../context/AppContext';
+import { COLORS } from '../constants/theme';
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
-
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+    <AppProvider>
+      <Tabs
+        screenOptions={({ route }) => ({
+          headerStyle: { backgroundColor: COLORS.card },
+          headerTitleStyle: { fontWeight: '800', color: COLORS.text, fontSize: 17 },
+          headerTintColor: COLORS.accent,
+          tabBarStyle: {
+            backgroundColor: COLORS.card,
+            borderTopColor: COLORS.border,
+            paddingBottom: 6, paddingTop: 6, height: 62,
+          },
+          tabBarActiveTintColor: COLORS.accent,
+          tabBarInactiveTintColor: COLORS.muted,
+          tabBarLabelStyle: { fontSize: 10, fontWeight: '700' },
+          tabBarIcon: ({ color, size }) => {
+            const icons: Record<string, any> = {
+              index: 'grid-outline',
+              symptoms: 'list-outline',
+              result: 'flask-outline',
+              history: 'time-outline',
+              medication: 'medkit-outline',
+              profile: 'person-outline',
+            };
+            return <Ionicons name={icons[route.name] || 'ellipse-outline'} size={size} color={color} />;
+          },
+        })}
+      >
+        <Tabs.Screen name="index"      options={{ title: 'Dashboard'  }} />
+        <Tabs.Screen name="symptoms"   options={{ title: 'Symptoms'   }} />
+        <Tabs.Screen name="result"     options={{ title: 'Result'     }} />
+        <Tabs.Screen name="history"    options={{ title: 'History'    }} />
+        <Tabs.Screen name="medication" options={{ title: 'Medication' }} />
+        <Tabs.Screen name="profile"    options={{ title: 'Profile'    }} />
+      </Tabs>
+    </AppProvider>
   );
 }
