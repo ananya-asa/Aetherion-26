@@ -22,7 +22,6 @@ export default function RootLayout() {
           tabBarIcon: ({ color, size }) => {
             const icons: Record<string, any> = {
               index: 'grid-outline',
-              dashboard: 'grid-outline',
               symptoms: 'list-outline',
               result: 'flask-outline',
               history: 'time-outline',
@@ -33,8 +32,7 @@ export default function RootLayout() {
           },
         })}
       >
-        <Tabs.Screen name="index"      options={{ title: 'Home', href: null, headerShown: false, tabBarStyle: { display: 'none' } }} />
-        <Tabs.Screen name="dashboard"  options={{ title: 'Dashboard'  }} />
+        <Tabs.Screen name="index"      options={{ title: 'Home', headerShown: false, tabBarStyle: { display: 'none' } }} />
         <Tabs.Screen name="symptoms"   options={{ title: 'Symptoms'   }} />
         <Tabs.Screen name="result"     options={{ title: 'Result'     }} />
         <Tabs.Screen name="history"    options={{ title: 'History'    }} />
