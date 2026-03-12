@@ -1,12 +1,16 @@
+import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
-  ScrollView, View, Text, TextInput,
-  TouchableOpacity, StyleSheet, ActivityIndicator,
+  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
+  Text, TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import { useRouter } from 'expo-router';
 import { BLEBar, Card, SectionTitle, VitalCard } from '../components/SharedComponents';
-import { useApp } from '../context/AppContext';
 import { COLORS, SYMPTOMS } from '../constants/theme';
+import { useApp } from '../context/AppContext';
 
 export default function SymptomsScreen() {
   const { bleConnected, toggleBLE, vitals, analyzeSymptoms, loading } = useApp();
@@ -29,11 +33,11 @@ export default function SymptomsScreen() {
       <Card>
         <SectionTitle>Current Vitals</SectionTitle>
         <View style={styles.vitalsRow}>
-          <VitalCard label="Temperature"    value={vitals.temp} unit="°C"   icon="🌡️" />
+          <VitalCard label="Temperature" value={vitals.temp} unit="°C" icon="🌡️" />
           <View style={{ width: 8 }} />
-          <VitalCard label="Blood Pressure" value={vitals.bp}   unit="mmHg" icon="💓" />
+          <VitalCard label="SpO₂" value={vitals.spo2} unit="%" icon="🫁" />
           <View style={{ width: 8 }} />
-          <VitalCard label="Heart Rate"     value={vitals.hr}   unit="bpm"  icon="❤️" />
+          <VitalCard label="Heart Rate" value={vitals.hr} unit="bpm" icon="❤️" />
         </View>
       </Card>
 
@@ -81,8 +85,8 @@ export default function SymptomsScreen() {
         {loading
           ? <ActivityIndicator color="#fff" />
           : <Text style={[styles.analyzeBtnText, { color: selected.length === 0 ? COLORS.muted : '#fff' }]}>
-              Analyze with AI ({selected.length} symptoms)
-            </Text>
+            Analyze with AI ({selected.length} symptoms)
+          </Text>
         }
       </TouchableOpacity>
     </ScrollView>

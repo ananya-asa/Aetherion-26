@@ -87,7 +87,7 @@ export default function AshaCare() {
         isDesktop ? {} : styles.mobileButton,
         { transform: [{ scale: pressed ? 0.96 : 1 }] }
       ]}
-      onPress={() => router.push('/symptoms')}
+      onPress={() => router.push('/dashboard' as any)}
     >
       <LinearGradient
         colors={['#FFFFFF', '#E6F0FF']}
