@@ -28,16 +28,16 @@ Additional Notes: ${notes || 'None'}
 Vitals from IoT sensors: ${vitalsText}
 
 IMPORTANT RULES:
-- For LOW risk / mild symptoms (mild fever, cold, fatigue, headache, minor body ache): suggest home remedies, rest, hydration, Ayurvedic remedies like tulsi tea, ginger, honey. Do NOT recommend visiting a doctor.
-- For MEDIUM risk (moderate fever above 102F, chest discomfort, vomiting, breathlessness): suggest OTC medicines + rest at home. Only suggest doctor if symptoms persist more than 2 days.
-- For HIGH risk (severe symptoms, very abnormal vitals, chest pain, difficulty breathing, unconsciousness): strongly recommend visiting a doctor or emergency immediately.
+- For LOW risk / mild symptoms (mild fever, cold, fatigue, headache): suggest home remedies and Ayurvedic tips like tulsi tea, ginger, honey, rest. Do NOT say visit doctor.
+- For MEDIUM risk (moderate fever, vomiting, breathlessness): suggest OTC medicines + rest. Only suggest doctor if symptoms worsen.
+- For HIGH risk (chest pain, severe symptoms, very abnormal vitals): strongly recommend visiting doctor or call 108 ambulance immediately.
 
 Respond ONLY with a JSON object (no markdown, no backticks):
 {
   "severity": "normal or mild or moderate or severe",
   "riskLevel": "Low or Medium or High",
   "diagnosis": "2-3 sentence plain English diagnosis",
-  "action": "specific home remedy, Ayurvedic tip, or medicine advice based on severity. For low risk give practical home remedies only."
+  "action": "specific home remedy or medicine advice based on severity"
 }`,
         }],
         temperature: 0.3,
@@ -53,8 +53,6 @@ Respond ONLY with a JSON object (no markdown, no backticks):
     }
 
     const text = data.choices[0].message.content;
-    console.log('Extracted text:', text);
-
     const clean = text.replace(/```json|```/g, '').trim();
     const parsed = JSON.parse(clean);
     res.json(parsed);
