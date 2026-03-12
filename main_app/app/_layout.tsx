@@ -32,7 +32,7 @@ export default function RootLayout() {
           },
         })}
       >
-        <Tabs.Screen name="index"      options={{ title: 'Dashboard'  }} />
+        <Tabs.Screen name="index"      options={{ title: 'Home', headerShown: false, tabBarStyle: { display: 'none' } }} />
         <Tabs.Screen name="symptoms"   options={{ title: 'Symptoms'   }} />
         <Tabs.Screen name="result"     options={{ title: 'Result'     }} />
         <Tabs.Screen name="history"    options={{ title: 'History'    }} />
