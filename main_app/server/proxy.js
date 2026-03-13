@@ -6,6 +6,48 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// In-memory registry for dynamic device detection
+let registeredMACs = {
+  '30:bb:7d:9c:b7:5a': { name: 'OnePlus Nord N20 SE', status: 'Ready' }
+};
+
+app.get('/bluetooth-stats', (req, res) => {
+  res.json({
+    activeBridges: 1,
+    uptime: '99.9%',
+    lastSync: new Date().toISOString()
+  });
+});
+
+app.get('/bluetooth-config', (req, res) => {
+  const dynamicDevices = Object.entries(registeredMACs).map(([id, info]) => ({
+    id,
+    name: info.name,
+    type: 'phone',
+    status: info.status,
+    priority: 1
+  }));
+
+  res.json({
+    primaryDevices: [
+      { id: 'FC:21:44:66:88:99', name: 'ASHACARE', type: 'core', priority: 1 },
+      ...dynamicDevices,
+      { id: 'LP:33:AA:88:44:BB', name: 'mimidev', type: 'laptop', priority: 2 }
+    ],
+    autoSyncEnabled: true,
+    handshakeProtocol: 'secure-v2'
+  });
+});
+
+app.post('/register-mac', (req, res) => {
+  const { id, name } = req.body;
+  if (!id || !name) return res.status(400).json({ error: 'ID and Name required' });
+  
+  registeredMACs[id] = { name, status: 'Detected', lastSeen: new Date() };
+  console.log(`[AshaLink] New device registered: ${name} (${id})`);
+  res.json({ success: true, message: `Device ${id} successfully written to backend registry.` });
+});
+
 // ============================================
 // KNOWLEDGE BASE - Ayurvedic + Medical RAG
 // ============================================
