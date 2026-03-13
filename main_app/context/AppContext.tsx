@@ -37,11 +37,13 @@ interface AppContextType {
   bleConnected: boolean;
   toggleBLE: () => void;
   vitals: Vitals;
+  setVitals: (v: Vitals) => void;
   diagnosisResult: DiagnosisResult | null;
   loading: boolean;
   analyzeSymptoms: (symptoms: string[], notes: string) => Promise<void>;
   userProfile: UserProfile;
   setUserProfile: (p: UserProfile) => void;
+  setBleConnected: (b: boolean) => void;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -106,7 +108,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   return (
     <AppContext.Provider value={{
-      bleConnected, toggleBLE, vitals,
+      bleConnected, setBleConnected, toggleBLE, vitals, setVitals,
       diagnosisResult, loading, analyzeSymptoms,
       userProfile, setUserProfile,
     }}>

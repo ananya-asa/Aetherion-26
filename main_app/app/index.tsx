@@ -51,20 +51,30 @@ export default function LoginScreen() {
   const onGoogleSignIn = React.useCallback(async () => {
     setIsGoogleLoading(true);
     try {
+      // For Native, we need the custom scheme. For Web, Clerk handles it via the browser URL.
+      const redirectUrl = Linking.createURL('/welcome', { scheme: 'healthai' });
+      
       const { createdSessionId, setActive } = await startOAuthFlow({
-        redirectUrl: Linking.createURL('/welcome', { scheme: 'healthai' }),
+        redirectUrl: redirectUrl,
       });
 
       if (createdSessionId) {
-        await setActive!({ session: createdSessionId });
-        router.replace('/welcome' as any);
+        if (setActive) {
+          await setActive({ session: createdSessionId });
+          router.replace('/welcome' as any);
+        }
+      } else {
+        // This might happen if additional steps are required (like MFA)
+        console.log('OAuth session creation incomplete or pending');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('OAuth error', err);
+      // Alerting the user helps us debug the specific Clerk error code
+      alert(`Login Failed: ${err.errors?.[0]?.message || err.message || 'Unknown Error'}`);
     } finally {
       setIsGoogleLoading(false);
     }
-  }, []);
+  }, [startOAuthFlow, router]);
 
 
   const buttonScale = useSharedValue(1);

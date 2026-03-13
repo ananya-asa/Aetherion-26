@@ -1,6 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { Bluetooth } from 'lucide-react-native';
+import { Wifi } from 'lucide-react-native'; // Update the import here
 import React, { useEffect, useRef } from 'react';
 import {
   Animated,
@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { useApp } from '../context/AppContext';
 
-export default function BluetoothPage() {
+export default function WifiPage() { // Renamed component for context
   const router = useRouter();
   const { toggleBLE, bleConnected } = useApp();
   const { width, height } = useWindowDimensions();
@@ -84,9 +84,10 @@ export default function BluetoothPage() {
   const handleConnect = () => {
     setIsScanning(true);
     // Short delay for visual feedback before navigating
+    // Note: You should probably navigate to a wifi-devices route here
     setTimeout(() => {
       setIsScanning(false);
-      router.push('/bluetooth-devices' as any);
+      router.push('/wifi-devices' as any); 
     }, 1500); 
   };
 
@@ -104,7 +105,7 @@ export default function BluetoothPage() {
           <Animated.View style={getRippleStyle(ripple3)} />
 
           <View style={styles.iconForeground}>
-            <Bluetooth
+            <Wifi // Update the component here
               size={Math.min(64, minDimension * 0.15)}
               color="#1D4ED8"
               strokeWidth={2.5}
@@ -118,8 +119,8 @@ export default function BluetoothPage() {
           </Text>
           <Text style={styles.description}>
             {isScanning
-              ? 'Initializing Bluetooth modules. Please wait.'
-              : 'Securely sync your health data by connecting to your AshaCare device via Bluetooth.'}
+              ? 'Initializing WiFi modules. Please wait.'
+              : 'Securely sync your health data by connecting to your AshaCare device via WiFi.'}
           </Text>
         </View>
 
@@ -136,7 +137,7 @@ export default function BluetoothPage() {
             style={styles.buttonGradient}
           >
             <Text style={styles.buttonText}>
-              {isScanning ? 'INITIALIZING...' : 'Search for Devices'}
+              {isScanning ? 'INITIALIZING...' : 'Search for Networks'}
             </Text>
           </LinearGradient>
         </TouchableOpacity>

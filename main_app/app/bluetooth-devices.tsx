@@ -44,13 +44,42 @@ import Animated, {
   Layout
 } from 'react-native-reanimated';
 import { useApp } from '../context/AppContext';
+import { BleManager } from 'react-native-ble-plx';
+const HARDWARE_MAC = '78:1C:3C:2D:43:F2';
+let bleManager: BleManager | null = null;
+
+if (Platform.OS !== 'web') {
+  try {
+    bleManager = new BleManager();
+  } catch (e) {
+    console.error('[BLE] Failed to initialize BleManager:', e);
+  }
+}
 
 const { width, height } = Dimensions.get('window');
+
+// Safe Base64 Decoder for React Native
+const decodeBase64 = (str: string) => {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
+  let out = '';
+  for (let i = 0; i < str.length; i += 4) {
+    const a = chars.indexOf(str.charAt(i));
+    const b = chars.indexOf(str.charAt(i + 1));
+    const c = chars.indexOf(str.charAt(i + 2));
+    const d = chars.indexOf(str.charAt(i + 3));
+
+    out += String.fromCharCode((a << 2) | (b >> 4));
+    if (c !== 64) out += String.fromCharCode(((b & 15) << 4) | (c >> 2));
+    if (d !== 64) out += String.fromCharCode(((c & 3) << 6) | d);
+  }
+  return out;
+};
 
 // --- Static Dummy Devices ---
 const DUMMY_DEVICES = [
   { id: 'FC:21:44:66:88:99', name: 'ASHACARE', rssi: -38, type: 'core' },
   { id: '30:bb:7d:9c:b7:5a', name: 'OnePlus Nord N20 SE', rssi: -58, type: 'phone', status: 'Detected' },
+  { id: '78:1C:3C:2D:43:F2', name: 'ESP32 BioSensor', rssi: -42, type: 'core', status: 'Detected' },
   { id: 'LP:33:AA:88:44:BB', name: 'mimidev', rssi: -62, type: 'laptop' },
   { id: 'ES:32:CC:11:55:AA', name: 'Biometric-ESP32', rssi: -48, type: 'core' },
 ];
@@ -158,7 +187,7 @@ const ScanHeroAnimation = ({ isScanning }: { isScanning: boolean }) => {
 
 export default function BluetoothDevicesPage() {
   const router = useRouter();
-  const { toggleBLE, bleConnected } = useApp();
+  const { toggleBLE, bleConnected, setVitals, setBleConnected } = useApp();
   const [isScanning, setIsScanning] = useState(false);
   const [devices, setDevices] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -188,7 +217,7 @@ export default function BluetoothDevicesPage() {
   // Auto-Sync Logic: Automatically target the primary OnePlus MAC if detected
   useEffect(() => {
     if (isScanning && !connectingDeviceId && !connectedDevice) {
-      const target = devices.find(d => d.id === '30:bb:7d:9c:b7:5a');
+      const target = devices.find(d => d.id === HARDWARE_MAC);
       if (target && isAutoSyncing) {
         handleConnect(target);
       }
@@ -213,53 +242,73 @@ export default function BluetoothDevicesPage() {
     setConnectingDeviceId(device.id);
     setError(null);
     
-    const isOnePlus = device.id === '30:bb:7d:9c:b7:5a';
-    const isLaptop = device.id === 'LP:33:AA:88:44:BB';
-    const isESP32 = device.type === 'core';
+    const isHardware = device.id === HARDWARE_MAC;
 
-    // Turbo-Bridge Handshake for OnePlus or Laptop node
-    if (isOnePlus || isLaptop || isESP32) {
-      if (Platform.OS === 'web') {
-        try {
-          const bluetooth = (navigator as any).bluetooth;
-          if (bluetooth) {
-            // Precision Hardware Request: 
-            // Only show the specific model, excluding unrelated earbuds or other phones
-            await bluetooth.requestDevice({
-              filters: [
-                { name: 'OnePlus Nord N20 SE' },
-                { name: 'oneplus nord n20 se' }
-              ],
-              optionalServices: ['generic_access', '4fafc201-1fb5-459e-8fcc-c5c9c331914b']
-            });
+    if (isHardware && Platform.OS !== 'web' && bleManager) {
+      try {
+        console.log('[BLE] Bridge Initiated:', HARDWARE_MAC);
+        
+        // 1. Connection with priority
+        const connectedDevice = await bleManager.connectToDevice(HARDWARE_MAC);
+        console.log('[BLE] Connected to Physical Hardware:', connectedDevice.name);
+        
+        // 2. Discovering services and characteristics
+        await connectedDevice.discoverAllServicesAndCharacteristics();
+        
+        // 3. Setup the Data Bridge
+        connectedDevice.monitorCharacteristicForService(
+          '4fafc201-1fb5-459e-8fcc-c5c9c331914b', // ESP32 Service UUID
+          'beb5483e-36e1-4688-b7f5-ea07361b26a8', // Sensor Characteristic UUID
+          (error, characteristic) => {
+            if (error) {
+              console.error('[BLE] Stream Error:', error);
+              setError("Data Stream Interrupted");
+              return;
+            }
+            if (characteristic?.value) {
+              // Safe Base64 decode for React Native
+              try {
+                const rawData = decodeBase64(characteristic.value);
+                console.log("[BLE] Raw Input:", rawData);
+                
+                // Parse sensor data (Expected: HR,SPO2,TEMP,HUM,AQ)
+                const parts = rawData.split(',');
+                if (parts.length >= 2) {
+                  setVitals({
+                    hr: parts[0] || '72',
+                    spo2: parts[1] || '98',
+                    temp: parts[2] || '36.5',
+                    humidity: parts[3] || '45',
+                    airQuality: parts[4] || 'Normal'
+                  });
+                }
+              } catch (decodeErr) {
+                console.error('[BLE] Decode Fail:', decodeErr);
+              }
+            }
           }
-        } catch (e: any) {
-          setError(`Sync Deferred: ${e.message}`);
-          setConnectingDeviceId(null);
-          return;
-        }
-      }
+        );
 
-      // ZERO-LAG HANDSHAKE
-      setTimeout(() => {
         setConnectedDevice(device);
+        setBleConnected(true);
         setConnectingDeviceId(null);
-        if (!bleConnected) toggleBLE();
         router.push('/dashboard' as any);
-      }, 50);
-      return;
+        return;
+      } catch (e: any) {
+        console.error('[BLE] Connection Crash:', e);
+        setError(`Hardware Fail: ${e.message || 'Check Power'}`);
+        setConnectingDeviceId(null);
+        return;
+      }
     }
     
-    // Default connection flow for other devices
+    // Fallback/Simulated connection flow
     setTimeout(() => {
       setConnectedDevice(device);
       setConnectingDeviceId(null);
       if (!bleConnected) toggleBLE();
-      
-      setTimeout(() => {
-        router.push('/dashboard' as any);
-      }, 1000);
-    }, 1500);
+      router.push('/dashboard' as any);
+    }, 1000);
   };
 
   const getDeviceIcon = (device: any) => {
@@ -388,11 +437,11 @@ export default function BluetoothDevicesPage() {
           <View style={styles.turboActionContainer}>
             <TouchableOpacity 
               style={styles.turboBtn}
-              onPress={() => handleConnect(DUMMY_DEVICES[1])} 
+              onPress={() => handleConnect(devices.find(d => d.id === HARDWARE_MAC) || DUMMY_DEVICES[2])} 
               disabled={!!connectedDevice}
             >
               <Activity size={18} color="#FFF" />
-              <Text style={styles.turboBtnText}>ONE-CLICK LINK: N20 SE</Text>
+              <Text style={styles.turboBtnText}>ONE-CLICK LINK: BIOSENSOR</Text>
             </TouchableOpacity>
           </View>
         </View>
