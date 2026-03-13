@@ -145,7 +145,9 @@ export default function ResultScreen() {
             {diagnosisResult.severity === 'severe' ? '🏥' : diagnosisResult.severity === 'moderate' ? '👨‍⚕️' : '🏠'}
           </Text>
           <Text style={styles.actionText}>
-            {typeof diagnosisResult.action === 'string'
+            {!diagnosisResult.action
+              ? 'Please consult a healthcare professional.'
+              : typeof diagnosisResult.action === 'string'
               ? diagnosisResult.action
               : (diagnosisResult.action as any)?.medicine
                 || (diagnosisResult.action as any)?.remedy
