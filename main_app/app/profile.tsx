@@ -1,15 +1,16 @@
+
+
 import React, { useState, useEffect, useRef } from 'react';
 import {
   ScrollView, View, Text, TextInput,
   TouchableOpacity, StyleSheet, Switch, Animated, Easing,
 } from 'react-native';
-import { Card, SectionTitle } from '../components/SharedComponents';
 import { useApp } from '../context/AppContext';
-import { COLORS } from '../constants/theme';
 
 const FLASK_URL = 'https://aetherion-26-production-fbfd.up.railway.app/predict';
 
 const GENDERS = ['Male', 'Female', 'Other'];
+const LANGUAGES = ['English', 'Hindi', 'Kannada'];
 const PROFESSIONS = ['Student', 'Office Worker', 'Manual Labor', 'Healthcare', 'Other'];
 const SLEEP_OPTIONS = ['< 5 hrs', '5-6 hrs', '7-8 hrs', '> 8 hrs'];
 const EXERCISE_OPTIONS = ['Never', '1-2x/week', '3-4x/week', 'Daily'];
@@ -57,12 +58,11 @@ function ToggleRow({ label, value, onChange, icon }: {
       <Text style={styles.toggleLabel}>{label}</Text>
       <Switch value={value} onValueChange={onChange}
         trackColor={{ false: '#D0E4F5', true: '#1A6FD4' }}
-        thumbColor={value ? '#fff' : '#fff'} />
+        thumbColor='#fff' />
     </View>
   );
 }
 
-// Celebration particles for good health
 function CelebrationBurst({ visible }: { visible: boolean }) {
   const particles = Array.from({ length: 12 }, (_, i) => ({
     anim: useRef(new Animated.Value(0)).current,
@@ -116,6 +116,7 @@ export default function ProfileScreen() {
     name: userProfile.name || '',
     age: userProfile.age || '',
     gender: userProfile.gender || '',
+    language: (userProfile as any).language || 'English',
     height: (userProfile as any).height || '',
     weight: (userProfile as any).weight || '',
     profession: (userProfile as any).profession || '',
@@ -166,8 +167,9 @@ export default function ProfileScreen() {
       sleep: form.sleep, exercise: form.exercise,
       smoking: form.smoking, alcohol: form.alcohol,
       sugarIntake: form.sugarIntake, bmi: bmiVal || '',
+      language: form.language,
     });
-    setAnalysisResult(null); // clear emoji on edit
+    setAnalysisResult(null);
     setSaved(true);
     setTimeout(() => { setSaved(false); setIsEditing(false); }, 1200);
   };
@@ -236,7 +238,6 @@ export default function ProfileScreen() {
       const data = await response.json();
       setAnalysisResult(data);
 
-      // Animate emoji pop in
       Animated.spring(emojiScale, {
         toValue: 1, friction: 4, tension: 100, useNativeDriver: true,
       }).start();
@@ -246,7 +247,6 @@ export default function ProfileScreen() {
         setShowCelebration(true);
         setTimeout(() => setShowCelebration(false), 1500);
       } else {
-        // Gloomy animation
         Animated.sequence([
           Animated.timing(gloomAnim, { toValue: 1, duration: 600, useNativeDriver: true }),
           Animated.timing(gloomAnim, { toValue: 0, duration: 600, useNativeDriver: true }),
@@ -290,6 +290,22 @@ export default function ProfileScreen() {
           <FieldLabel>Gender</FieldLabel>
           <PillSelector options={GENDERS} value={form.gender} onChange={v => set('gender', v)} />
           <View style={{ height: 16 }} />
+
+          {/* LANGUAGE PREFERENCE */}
+          <FieldLabel>🌐 Preferred Language</FieldLabel>
+          <View style={styles.languageRow}>
+            {LANGUAGES.map(lang => (
+              <TouchableOpacity key={lang} onPress={() => set('language', lang)}
+                style={[styles.langPill, form.language === lang && styles.langPillActive]}>
+                <Text style={styles.langFlag}>
+                  {lang === 'English' ? '🇬🇧' : lang === 'Hindi' ? '🇮🇳' : '🏴'}
+                </Text>
+                <Text style={[styles.langText, form.language === lang && styles.langTextActive]}>{lang}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+          <View style={{ height: 16 }} />
+
           <FieldLabel>Profession</FieldLabel>
           <PillSelector options={PROFESSIONS} value={form.profession} onChange={v => set('profession', v)} />
           <View style={{ height: 8 }} />
@@ -359,18 +375,22 @@ export default function ProfileScreen() {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
 
-      {/* Edit pencil */}
       <TouchableOpacity style={styles.editBtn} onPress={() => setIsEditing(true)}>
         <Text style={styles.editBtnText}>✏️ Edit</Text>
       </TouchableOpacity>
 
+      {/* Language badge */}
+      <View style={styles.langBadge}>
+        <Text style={styles.langBadgeText}>
+          {(userProfile as any).language === 'Kannada' ? '🏴 Kannada' :
+           (userProfile as any).language === 'Hindi' ? '🇮🇳 Hindi' : '🇬🇧 English'}
+        </Text>
+      </View>
+
       {/* Profile Hero */}
       <View style={styles.heroCard}>
-        {/* Gloomy overlay */}
         <Animated.View style={[styles.gloomOverlay, { opacity: gloomOpacity }]} pointerEvents="none" />
-
         <View style={styles.heroLeft}>
-          {/* Avatar */}
           <View style={styles.avatarWrap}>
             <View style={styles.avatar}>
               <Text style={styles.avatarLetter}>
@@ -379,8 +399,6 @@ export default function ProfileScreen() {
             </View>
             <CelebrationBurst visible={showCelebration} />
           </View>
-
-          {/* Emoji after analysis */}
           {analysisResult && (
             <Animated.Text style={[styles.healthEmoji, { transform: [{ scale: emojiScale }] }]}>
               {analysisResult.emoji}
@@ -403,33 +421,26 @@ export default function ProfileScreen() {
         </View>
       </View>
 
-      {/* Analysis Result */}
       {analysisResult && (
         <View style={[styles.resultCard, { borderColor: statusColor }]}>
           <Text style={[styles.resultStatus, { color: statusColor }]}>{analysisResult.status}</Text>
           <Text style={styles.resultRisk}>Risk Level: {analysisResult.riskPercent}%</Text>
           <Text style={styles.resultMessage}>{analysisResult.message}</Text>
-          {isGoodHealth && (
-            <Text style={styles.resultCheer}>🎉 Keep it up! You're doing amazing!</Text>
-          )}
+          {isGoodHealth && <Text style={styles.resultCheer}>🎉 Keep it up! You're doing amazing!</Text>}
           {!isGoodHealth && analysisResult.status !== 'Error' && (
             <Text style={styles.resultCheer}>💙 Small steps every day make a big difference.</Text>
           )}
         </View>
       )}
 
-      {/* Daily Analysis Button */}
       <TouchableOpacity
         style={[styles.analysisBtn, analyzing && { opacity: 0.7 }]}
-        onPress={runDailyAnalysis}
-        disabled={analyzing}
-      >
+        onPress={runDailyAnalysis} disabled={analyzing}>
         <Text style={styles.analysisBtnText}>
-          {analyzing ? '⏳ Analyzing...' : ' Daily Analysis'}
+          {analyzing ? '⏳ Analyzing...' : '🧬 Daily Analysis'}
         </Text>
       </TouchableOpacity>
 
-      {/* Info Cards */}
       <View style={styles.infoGrid}>
         <View style={styles.infoCard}>
           <Text style={styles.infoIcon}>😴</Text>
@@ -480,16 +491,18 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F0F7FF' },
   content: { padding: 20, paddingBottom: 50 },
-
-  // Edit button
   editBtn: {
     alignSelf: 'flex-end', backgroundColor: '#fff',
     borderRadius: 12, paddingHorizontal: 16, paddingVertical: 10,
-    borderWidth: 2, borderColor: '#1A6FD4', marginBottom: 16,
+    borderWidth: 2, borderColor: '#1A6FD4', marginBottom: 10,
   },
   editBtnText: { color: '#1A6FD4', fontSize: 18, fontWeight: '700' },
-
-  // Hero card
+  langBadge: {
+    alignSelf: 'flex-start', backgroundColor: '#E8F1FF',
+    borderRadius: 20, paddingHorizontal: 14, paddingVertical: 6,
+    marginBottom: 14, borderWidth: 1.5, borderColor: '#1A6FD4',
+  },
+  langBadgeText: { fontSize: 16, fontWeight: '700', color: '#1A6FD4' },
   heroCard: {
     backgroundColor: '#fff', borderRadius: 24, padding: 24,
     flexDirection: 'row', alignItems: 'center', gap: 20,
@@ -512,21 +525,16 @@ const styles = StyleSheet.create({
   },
   avatarLetter: { color: '#fff', fontSize: 44, fontWeight: '900' },
   healthEmoji: { fontSize: 44, marginTop: 8 },
-
-  // Burst
   burstContainer: {
     position: 'absolute', width: 0, height: 0,
     alignItems: 'center', justifyContent: 'center',
   },
   particle: { position: 'absolute', width: 10, height: 10, borderRadius: 5 },
-
   heroRight: { flex: 1 },
   heroName: { fontSize: 30, fontWeight: '900', color: '#0A1628', marginBottom: 6 },
   heroAge: { fontSize: 22, fontWeight: '700', color: '#1A6FD4', marginBottom: 4 },
   heroBMI: { fontSize: 20, fontWeight: '700', color: '#334E68', marginBottom: 4 },
   heroDetail: { fontSize: 18, color: '#486581', marginBottom: 2, fontWeight: '500' },
-
-  // Result card
   resultCard: {
     backgroundColor: '#fff', borderRadius: 20, padding: 24,
     borderWidth: 3, marginBottom: 20,
@@ -537,8 +545,6 @@ const styles = StyleSheet.create({
   resultRisk: { fontSize: 22, fontWeight: '700', color: '#334E68', marginBottom: 8 },
   resultMessage: { fontSize: 20, color: '#486581', lineHeight: 28, marginBottom: 10 },
   resultCheer: { fontSize: 18, color: '#1A6FD4', fontWeight: '600' },
-
-  // Analysis button
   analysisBtn: {
     backgroundColor: '#1A6FD4', borderRadius: 18,
     paddingVertical: 22, alignItems: 'center', marginBottom: 24,
@@ -546,8 +552,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.35, shadowRadius: 12, elevation: 8,
   },
   analysisBtnText: { color: '#fff', fontSize: 24, fontWeight: '900', letterSpacing: 0.5 },
-
-  // Info grid
   infoGrid: { flexDirection: 'row', gap: 12, marginBottom: 12 },
   infoCard: {
     flex: 1, backgroundColor: '#fff', borderRadius: 16, padding: 16,
@@ -558,8 +562,6 @@ const styles = StyleSheet.create({
   infoIcon: { fontSize: 28, marginBottom: 6 },
   infoValue: { fontSize: 16, fontWeight: '800', color: '#0A1628', textAlign: 'center' },
   infoLabel: { fontSize: 13, color: '#9DB5CC', marginTop: 2, fontWeight: '600' },
-
-  // Conditions
   conditionsCard: {
     backgroundColor: '#fff', borderRadius: 16, padding: 20, marginTop: 4,
     shadowColor: '#1A6FD4', shadowOffset: { width: 0, height: 2 },
@@ -567,8 +569,6 @@ const styles = StyleSheet.create({
   },
   conditionsTitle: { fontSize: 20, fontWeight: '800', color: '#0A1628', marginBottom: 8 },
   conditionsText: { fontSize: 18, color: '#486581', fontWeight: '500' },
-
-  // ─── FORM STYLES ──────────────────────────────────────────────
   formHeader: { marginBottom: 20 },
   formTitle: { fontSize: 32, fontWeight: '900', color: '#0A1628' },
   formSubtitle: { fontSize: 18, color: '#486581', marginTop: 4 },
@@ -618,4 +618,15 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3, shadowRadius: 10, elevation: 6,
   },
   saveBtnText: { color: '#fff', fontSize: 22, fontWeight: '900' },
+  // Language selector
+  languageRow: { flexDirection: 'row', gap: 12 },
+  langPill: {
+    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    gap: 8, paddingVertical: 14, borderRadius: 14,
+    borderWidth: 2, borderColor: '#D0E4F5', backgroundColor: '#F7FBFF',
+  },
+  langPillActive: { backgroundColor: '#E8F1FF', borderColor: '#1A6FD4' },
+  langFlag: { fontSize: 22 },
+  langText: { fontSize: 16, fontWeight: '700', color: '#334E68' },
+  langTextActive: { color: '#1A6FD4' },
 });
