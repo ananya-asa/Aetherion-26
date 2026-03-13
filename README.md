@@ -46,6 +46,17 @@ AshaCare is built on a modular, decentralized architecture:
 
 ---
 
+## 🔌 Hardware Preview (AshaSense)
+
+The AshaSense module is an ESP32-based BioSensor that tracks vital health metrics in real-time.
+
+<p align="center">
+  <img src="./IOT/hardware_vitals.jpeg" width="45%" alt="Hardware Vitals" />
+  <img src="./IOT/hardware_setup.jpeg" width="45%" alt="Hardware Setup" />
+</p>
+
+---
+
 ## 🛠️ Technology Stack
 
 | Component | Technology |
