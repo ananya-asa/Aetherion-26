@@ -9,7 +9,6 @@ import { useApp } from '../context/AppContext';
 
 const FLASK_URL = 'https://aetherion-26-production-fbfd.up.railway.app/predict';
 
-
 const GENDERS = ['Male', 'Female', 'Other'];
 const LANGUAGES = ['English', 'Hindi', 'Kannada'];
 const PROFESSIONS = ['Student', 'Office Worker', 'Manual Labor', 'Healthcare', 'Other'];
@@ -114,8 +113,7 @@ export default function ProfileScreen() {
   const emojiScale = useRef(new Animated.Value(0)).current;
 
   const [form, setForm] = useState({
-    name: userProfile.name || user?.fullName || user?.username || '',
-
+    name: userProfile.name || '',
     age: userProfile.age || '',
     gender: userProfile.gender || '',
     language: (userProfile as any).language || 'English',
