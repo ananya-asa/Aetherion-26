@@ -3,9 +3,12 @@ import {
   ScrollView, View, Text, TextInput,
   TouchableOpacity, StyleSheet, Switch,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { Card, SectionTitle } from '../components/SharedComponents';
 import { useApp } from '../context/AppContext';
+import { useAuth } from '../context/AuthContext';
 import { COLORS } from '../constants/theme';
+
 
 const GENDERS = ['Male', 'Female', 'Other'];
 const PROFESSIONS = ['Student', 'Office Worker', 'Manual Labor', 'Healthcare', 'Other'];
@@ -73,10 +76,12 @@ function ToggleRow({ label, value, onChange, icon }: {
 
 export default function ProfileScreen() {
   const { userProfile, setUserProfile } = useApp();
+  const { user, signOut } = useAuth();
   const [saved, setSaved] = useState(false);
 
   const [form, setForm] = useState({
-    name: userProfile.name || '',
+    name: userProfile.name || user?.fullName || user?.username || '',
+
     age: userProfile.age || '',
     gender: userProfile.gender || '',
     height: '',
@@ -145,12 +150,23 @@ export default function ProfileScreen() {
 
       {/* Header */}
       <View style={styles.header}>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>{form.name ? form.name[0].toUpperCase() : '👤'}</Text>
-        </View>
-        <View>
-          <Text style={styles.headerName}>{form.name || 'Your Profile'}</Text>
-          <Text style={styles.headerSub}>Health data improves AI accuracy</Text>
+        {user?.imageUrl ? (
+          <Image source={{ uri: user.imageUrl }} style={styles.avatarImage} />
+        ) : (
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>{form.name ? form.name[0].toUpperCase() : '👤'}</Text>
+          </View>
+        )}
+        <View style={{ flex: 1 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <Text style={styles.headerName}>{form.name || 'Your Profile'}</Text>
+            {user && (
+              <View style={styles.verifiedMiniBadge}>
+                <Text style={{ fontSize: 10 }}>🛡️</Text>
+              </View>
+            )}
+          </View>
+          <Text style={styles.headerSub}>{user?.primaryEmailAddress?.emailAddress || 'Health data improves AI accuracy'}</Text>
         </View>
       </View>
 
@@ -246,6 +262,14 @@ export default function ProfileScreen() {
         <Text style={styles.saveBtnText}>{saved ? '✓ Profile Saved!' : 'Save Profile'}</Text>
       </TouchableOpacity>
 
+      <TouchableOpacity
+        style={styles.signOutBtn}
+        onPress={() => signOut()}
+      >
+        <Text style={styles.signOutBtnText}>Sign Out</Text>
+      </TouchableOpacity>
+
+
     </ScrollView>
   );
 }
@@ -263,8 +287,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center', alignItems: 'center',
   },
   avatarText: { color: '#fff', fontSize: 24, fontWeight: '800' },
+  avatarImage: { width: 56, height: 56, borderRadius: 28 },
   headerName: { fontSize: 20, fontWeight: '800', color: COLORS.text },
   headerSub: { fontSize: 12, color: COLORS.muted, marginTop: 2 },
+  verifiedMiniBadge: {
+    backgroundColor: '#F0F9FF',
+    padding: 2,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: '#BAE6FD',
+  },
   fieldLabel: {
     fontSize: 11, fontWeight: '800', color: COLORS.textSecondary,
     textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8,
@@ -301,4 +333,14 @@ const styles = StyleSheet.create({
   hint: { fontSize: 13, color: COLORS.muted, marginBottom: 12 },
   saveBtn: { backgroundColor: COLORS.accent, padding: 16, borderRadius: 14, alignItems: 'center', marginTop: 4 },
   saveBtnText: { color: '#fff', fontSize: 16, fontWeight: '800' },
+  signOutBtn: { 
+    backgroundColor: 'transparent', 
+    padding: 16, 
+    borderRadius: 14, 
+    alignItems: 'center', 
+    marginTop: 12,
+    borderWidth: 1.5,
+    borderColor: COLORS.danger + '40'
+  },
+  signOutBtnText: { color: COLORS.danger, fontSize: 16, fontWeight: '700' },
 });
