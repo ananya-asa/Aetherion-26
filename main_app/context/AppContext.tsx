@@ -82,7 +82,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       : 'No profile provided.';
 
     try {
-      const response = await fetch('https://aetherion-26-production.up.railway.app/analyze', {
+      const response = await fetch('https://aetherion-26-production-c258.up.railway.app/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
