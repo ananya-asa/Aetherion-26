@@ -92,17 +92,6 @@ python app.py
 
 ---
 
-## 📱 Screenshots
-
-<p align="center">
-  <img src="https://via.placeholder.com/200x400.png?text=Login+Screen" width="22%" />
-  <img src="https://via.placeholder.com/200x400.png?text=Dashboard" width="22%" />
-  <img src="https://via.placeholder.com/200x400.png?text=Bluetooth+Sync" width="22%" />
-  <img src="https://via.placeholder.com/200x400.png?text=AI+Analysis" width="22%" />
-</p>
-
----
-
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
@@ -110,5 +99,5 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ---
 
 <p align="center">
-  Made with ❤️ by the AshaCare Team
+  Made with ❤️ by the AshaCare SJEC Team
 </p>
