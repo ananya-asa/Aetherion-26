@@ -1,95 +1,93 @@
-import React from 'react';
-import { ScrollView, View, Text, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
-import { useRouter } from 'expo-router';
+import React, { useEffect } from 'react';
+import { View, Text, ScrollView, StyleSheet, ActivityIndicator, RefreshControl } from 'react-native';
 import { useApp } from '../context/AppContext';
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-
-const { width } = Dimensions.get('window');
-
-function VitalBox({ label, value, unit, icon, color }: any) {
-  return (
-    <View style={styles.vitalBox}>
-      <View style={[styles.iconCircle, { backgroundColor: color + '15' }]}>
-        <MaterialCommunityIcons name={icon} size={24} color={color} />
-      </View>
-      <Text style={styles.vitalLabel}>{label}</Text>
-      <View style={styles.valueRow}>
-        <Text style={styles.vitalValue}>{value}</Text>
-        <Text style={styles.unitText}>{unit}</Text>
-      </View>
-    </View>
-  );
-}
 
 export default function Dashboard() {
-  const { bleConnected, vitals, userProfile } = useApp();
-  const router = useRouter();
+  const { vitals, setVitals, bleConnected, setBleConnected } = useApp();
+  const [refreshing, setRefreshing] = React.useState(false);
+
+  // THE FIX: Immediate fetch function
+  const fetchRightNow = async () => {
+    try {
+      const res = await fetch("http://192.168.4.1/status");
+      const data = await res.json();
+      setVitals(data); // Put whatever data exists into the state
+      setBleConnected(true);
+    } catch (e) {
+      console.log("Initial fetch failed:", e);
+    }
+  };
+
+  useEffect(() => {
+    fetchRightNow(); // Run immediately on load
+    
+    // Keep polling every 2 seconds for updates
+    const interval = setInterval(fetchRightNow, 2000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const onRefresh = React.useCallback(async () => {
+    setRefreshing(true);
+    await fetchRightNow();
+    setRefreshing(false);
+  }, []);
+
+  // Convert the object into a list, excluding empty or helper states
+  const dataKeys = Object.entries(vitals).filter(([key]) => key !== 'isDemo');
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      {/* Header with Profile Link */}
+    <ScrollView 
+      style={styles.container}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+    >
       <View style={styles.header}>
-        <View>
-          <Text style={styles.greeting}>Health Monitor</Text>
-          <Text style={styles.subText}>{userProfile?.name || 'Patient Overview'}</Text>
+        <Text style={styles.title}>Live Device Data</Text>
+        <View style={[styles.badge, { backgroundColor: bleConnected ? '#10B981' : '#EF4444' }]}>
+          <Text style={styles.badgeText}>{bleConnected ? 'ACTIVE' : 'OFFLINE'}</Text>
         </View>
-        <TouchableOpacity onPress={() => router.push('/profile')} style={styles.profileBtn}>
-          <Ionicons name="person-circle-outline" size={45} color="#2563EB" />
-        </TouchableOpacity>
       </View>
 
-      {/* Bluetooth Connection Bar */}
-      <TouchableOpacity 
-        style={[styles.bleBar, { backgroundColor: bleConnected ? '#ECFDF5' : '#FFF1F2' }]} 
-        onPress={() => router.push('/connect')}
-      >
-        <Ionicons name="bluetooth" size={20} color={bleConnected ? '#10B981' : '#EF4444'} />
-        <Text style={[styles.bleText, { color: bleConnected ? '#065F46' : '#991B1B' }]}>
-          {bleConnected ? 'ESP32 Connected' : 'Tap to Connect Device'}
-        </Text>
-        <Ionicons name="chevron-forward" size={18} color={bleConnected ? '#10B981' : '#EF4444'} />
-      </TouchableOpacity>
-
-      {/* The 4 Vital Boxes Grid */}
-      <View style={styles.grid}>
-        <VitalBox label="Heart Rate" value={vitals.hr} unit="bpm" icon="heart-pulse" color="#EF4444" />
-        <VitalBox label="Oxygen (SpO2)" value={vitals.spo2} unit="%" icon="water" color="#3B82F6" />
-        <VitalBox label="Body Temp" value={vitals.temp} unit="°C" icon="thermometer" color="#F59E0B" />
-        <VitalBox label="Humidity" value={vitals.humidity} unit="%" icon="cloud-percent" color="#8B5CF6" />
+      <View style={styles.cardContainer}>
+        {dataKeys.length > 0 ? (
+          dataKeys.map(([key, value]) => (
+            <View key={key} style={styles.dataBox}>
+              <Text style={styles.keyLabel}>{key.toUpperCase()}</Text>
+              <Text style={styles.valueText}>{String(value)}</Text>
+            </View>
+          ))
+        ) : (
+          <View style={styles.emptyState}>
+            <ActivityIndicator size="large" color="#3B82F6" />
+            <Text style={styles.emptyText}>Pulling data from 192.168.4.1...</Text>
+          </View>
+        )}
       </View>
 
-      {/* Air Quality Index Bar */}
-      <View style={styles.airCard}>
-        <View style={styles.airInfo}>
-          <MaterialCommunityIcons name="weather-windy" size={20} color="#64748B" />
-          <Text style={styles.airLabel}>Air Quality Status</Text>
-        </View>
-        <Text style={[styles.airValue, { color: vitals.airQuality === 'Good' ? '#10B981' : '#F59E0B' }]}>
-          {vitals.airQuality}
-        </Text>
-      </View>
+      <Text style={styles.footer}>Tip: Pull down to force refresh</Text>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8FAFC' },
-  content: { padding: 20, paddingTop: 50 },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 25 },
-  greeting: { fontSize: 26, fontWeight: '800', color: '#1E293B' },
-  subText: { fontSize: 14, color: '#64748B' },
-  profileBtn: { padding: 2 },
-  bleBar: { flexDirection: 'row', padding: 18, borderRadius: 16, alignItems: 'center', marginBottom: 25, gap: 10, elevation: 1 },
-  bleText: { flex: 1, fontWeight: '700', fontSize: 14 },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
-  vitalBox: { width: (width - 55) / 2, backgroundColor: 'white', borderRadius: 24, padding: 20, marginBottom: 15, elevation: 2 },
-  iconCircle: { width: 48, height: 48, borderRadius: 14, justifyContent: 'center', alignItems: 'center', marginBottom: 12 },
-  vitalLabel: { fontSize: 13, color: '#64748B', fontWeight: '600' },
-  valueRow: { flexDirection: 'row', alignItems: 'baseline', marginTop: 5, gap: 3 },
-  vitalValue: { fontSize: 26, fontWeight: '800', color: '#1E293B' },
-  unitText: { fontSize: 12, color: '#94A3B8' },
-  airCard: { backgroundColor: 'white', padding: 20, borderRadius: 18, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 10, elevation: 1 },
-  airInfo: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  airLabel: { fontSize: 14, color: '#64748B', fontWeight: '600' },
-  airValue: { fontSize: 16, fontWeight: '800' }
+  container: { flex: 1, backgroundColor: '#F8FAFC', padding: 20 },
+  header: { marginTop: 40, marginBottom: 20, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  title: { fontSize: 24, fontWeight: 'bold', color: '#0F172A' },
+  badge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
+  badgeText: { color: 'white', fontSize: 10, fontWeight: 'bold' },
+  cardContainer: { gap: 12 },
+  dataBox: { 
+    backgroundColor: 'white', 
+    padding: 20, 
+    borderRadius: 16, 
+    borderWidth: 1, 
+    borderColor: '#E2E8F0',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center'
+  },
+  keyLabel: { color: '#64748B', fontWeight: 'bold', fontSize: 13 },
+  valueText: { fontSize: 22, fontWeight: 'bold', color: '#2563EB' },
+  emptyState: { marginTop: 100, alignItems: 'center' },
+  emptyText: { marginTop: 20, color: '#94A3B8' },
+  footer: { textAlign: 'center', color: '#CBD5E1', fontSize: 11, marginTop: 30 }
 });

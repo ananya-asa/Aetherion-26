@@ -32,22 +32,12 @@ export default function RootLayout() {
           },
         })}
       >
-        <Tabs.Screen name="index" options={{ title: 'Dashboard' }} />
-        
-        {/* Hidden from tab bar but included in the Context Provider */}
-        <Tabs.Screen 
-          name="connect" 
-          options={{ 
-            title: 'Connect Device',
-            href: null 
-          }} 
-        />
-
-        <Tabs.Screen name="symptoms"   options={{ title: 'Symptoms' }} />
-        <Tabs.Screen name="result"     options={{ title: 'Result' }} />
-        <Tabs.Screen name="history"    options={{ title: 'History' }} />
+        <Tabs.Screen name="index"      options={{ title: 'Dashboard'  }} />
+        <Tabs.Screen name="symptoms"   options={{ title: 'Symptoms'   }} />
+        <Tabs.Screen name="result"     options={{ title: 'Result'     }} />
+        <Tabs.Screen name="history"    options={{ title: 'History'    }} />
         <Tabs.Screen name="medication" options={{ title: 'Medication' }} />
-        <Tabs.Screen name="profile"    options={{ title: 'Profile' }} />
+        <Tabs.Screen name="profile"    options={{ title: 'Profile'    }} />
       </Tabs>
     </AppProvider>
   );
