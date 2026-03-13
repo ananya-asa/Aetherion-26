@@ -54,6 +54,10 @@ The AshaSense module is an ESP32-based BioSensor that tracks vital health metric
   <img src="./IOT/hardware_vitals.jpeg" width="45%" alt="Hardware Vitals" />
   <img src="./IOT/hardware_setup.jpeg" width="45%" alt="Hardware Setup" />
 </p>
+<p align="center">
+  <img src="./IOT/hardware_angle.jpeg" width="45%" alt="Hardware Angle" />
+  <img src="./IOT/hardware_close_up.jpeg" width="45%" alt="Hardware Close Up" />
+</p>
 
 ---
 
