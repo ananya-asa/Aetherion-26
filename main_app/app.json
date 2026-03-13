@@ -46,18 +46,8 @@
             "backgroundColor": "#000000"
           }
         }
-      ],
-      [
-        "react-native-ble-plx",
-        {
-          "isBackgroundEnabled": true,
-          "modes": [
-            "central"
-          ],
-          "bluetoothAlwaysPermission": "Allow AshaCare to connect to your health monitoring devices."
-        }
-      ],
-      "expo-secure-store"
+      ]
+  
     ],
     "experiments": {
       "typedRoutes": true,

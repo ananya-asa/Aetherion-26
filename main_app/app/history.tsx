@@ -1,45 +1,28 @@
 import React, { useState } from 'react';
-import { ScrollView, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { Card, SectionTitle, RiskBadge } from '../components/SharedComponents';
-import { COLORS, MOCK_HISTORY } from '../constants/theme';
+import { ScrollView, View, Text, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, ActivityIndicator } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
-function HistoryEntry({ entry }: { entry: typeof MOCK_HISTORY[0] }) {
-  const [expanded, setExpanded] = useState(false);
+function HistoryItem({ item }: { item: any }) {
+  const [open, setOpen] = useState(false);
+  const color = item.severity === 'severe' ? '#EF4444' : item.severity === 'moderate' ? '#F59E0B' : '#10B981';
 
   return (
-    <TouchableOpacity
-      onPress={() => setExpanded(v => !v)}
-      style={[styles.entry, expanded && { backgroundColor: COLORS.accentLight, borderColor: COLORS.accent }]}
-      activeOpacity={0.8}
-    >
-      <View style={styles.entryHeader}>
+    <TouchableOpacity style={styles.item} onPress={() => setOpen(!open)} activeOpacity={0.8}>
+      <View style={styles.itemHeader}>
+        <View style={[styles.dot, { backgroundColor: color }]} />
         <View style={{ flex: 1 }}>
-          <Text style={styles.entryDate}>{entry.date} · {entry.time}</Text>
-          <Text style={styles.entryDiagnosisPreview} numberOfLines={1}>{entry.diagnosis}</Text>
+          <Text style={styles.itemDate}>{item.date}</Text>
+          <Text style={styles.itemDiag} numberOfLines={1}>{item.diagnosis}</Text>
         </View>
-        <View style={styles.entryRight}>
-          <RiskBadge level={entry.riskLevel} />
-          <Text style={styles.chevron}>{expanded ? '▲' : '▼'}</Text>
-        </View>
+        <Ionicons name={open ? "chevron-up" : "chevron-down"} size={20} color="#CBD5E1" />
       </View>
-
-      {expanded && (
-        <View style={styles.entryBody}>
-          <Text style={styles.entryDiagnosis}>{entry.diagnosis}</Text>
-          <View style={styles.vitalsGrid}>
-            {[
-              { label: 'HR', val: `${entry.vitals.hr} bpm`, icon: '❤️' },
-              { label: 'SpO₂', val: `${entry.vitals.spo2}%`, icon: '🫁' },
-              { label: 'Temp', val: `${entry.vitals.temp}°C`, icon: '🌡️' },
-              { label: 'Humidity', val: `${entry.vitals.humidity}%`, icon: '💧' },
-              { label: 'Air', val: entry.vitals.airQuality, icon: '🌬️' },
-            ].map(v => (
-              <View key={v.label} style={styles.vitalChip}>
-                <Text style={styles.vitalChipIcon}>{v.icon}</Text>
-                <Text style={styles.vitalChipVal}>{v.val}</Text>
-                <Text style={styles.vitalChipLabel}>{v.label}</Text>
-              </View>
-            ))}
+      {open && (
+        <View style={styles.itemBody}>
+          <Text style={styles.fullDiag}>{item.diagnosis}</Text>
+          <View style={styles.vitalsRow}>
+            <Text style={styles.vitalText}>❤️ {item.vitals.hr} bpm</Text>
+            <Text style={styles.vitalText}>🫁 {item.vitals.spo2}%</Text>
+            <Text style={styles.vitalText}>🌡️ {item.vitals.temp}°C</Text>
           </View>
         </View>
       )}
@@ -48,64 +31,69 @@ function HistoryEntry({ entry }: { entry: typeof MOCK_HISTORY[0] }) {
 }
 
 export default function HistoryScreen() {
-  return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Card style={styles.summaryCard}>
-        <View style={styles.summaryRow}>
-          {[
-            { label: 'Total', val: '3', color: COLORS.accent },
-            { label: 'Low Risk', val: '1', color: COLORS.success },
-            { label: 'Medium', val: '2', color: COLORS.warning },
-            { label: 'High', val: '0', color: COLORS.danger },
-          ].map(s => (
-            <View key={s.label} style={styles.summaryItem}>
-              <Text style={[styles.summaryVal, { color: s.color }]}>{s.val}</Text>
-              <Text style={styles.summaryLabel}>{s.label}</Text>
-            </View>
-          ))}
-        </View>
-      </Card>
+  const [userId, setUserId] = useState('');
+  const [list, setList] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-      <Card>
-        <SectionTitle>Health History</SectionTitle>
-        <View style={styles.list}>
-          {MOCK_HISTORY.map(entry => (
-            <HistoryEntry key={entry.id} entry={entry} />
-          ))}
+  const searchHistory = async () => {
+    if (!userId) return;
+    setLoading(true);
+    try {
+      // Ensure this IP matches your Flask server
+      const res = await fetch(`http://192.168.76.183:5000/history/${userId}`);
+      const data = await res.json();
+      setList(data);
+    } catch (e) {
+      alert("Search failed. Check server connection.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <SafeAreaView style={styles.safe}>
+      <View style={styles.container}>
+        <Text style={styles.title}>Health Records</Text>
+        <View style={styles.searchBar}>
+          <TextInput 
+            style={styles.input} 
+            placeholder="Search Patient ID..." 
+            value={userId}
+            onChangeText={setUserId}
+          />
+          <TouchableOpacity style={styles.searchBtn} onPress={searchHistory}>
+            <Ionicons name="search" size={20} color="white" />
+          </TouchableOpacity>
         </View>
-      </Card>
-    </ScrollView>
+
+        {loading ? (
+          <ActivityIndicator size="large" color="#2563EB" style={{ marginTop: 40 }} />
+        ) : (
+          <ScrollView showsVerticalScrollIndicator={false}>
+            {list.map((item, i) => <HistoryItem key={i} item={item} />)}
+            {list.length === 0 && <Text style={styles.empty}>No records found.</Text>}
+          </ScrollView>
+        )}
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.bg },
-  content: { padding: 16, paddingBottom: 40 },
-  summaryCard: { borderLeftWidth: 4, borderLeftColor: COLORS.accent },
-  summaryRow: { flexDirection: 'row', justifyContent: 'space-around' },
-  summaryItem: { alignItems: 'center' },
-  summaryVal: { fontSize: 24, fontWeight: '800' },
-  summaryLabel: { fontSize: 11, color: COLORS.muted, marginTop: 2 },
-  list: { gap: 10 },
-  entry: {
-    borderWidth: 1.5, borderColor: COLORS.border,
-    borderRadius: 14, padding: 14,
-    backgroundColor: COLORS.surface,
-  },
-  entryHeader: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  entryDate: { fontSize: 11, color: COLORS.muted, marginBottom: 2 },
-  entryDiagnosisPreview: { fontSize: 13, fontWeight: '600', color: COLORS.text },
-  entryRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  chevron: { color: COLORS.muted, fontSize: 12 },
-  entryBody: { marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: COLORS.border },
-  entryDiagnosis: { fontSize: 13, color: COLORS.textSecondary, marginBottom: 12, lineHeight: 20 },
-  vitalsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  vitalChip: {
-    backgroundColor: COLORS.card, borderRadius: 10,
-    borderWidth: 1, borderColor: COLORS.border,
-    padding: 10, alignItems: 'center', minWidth: 64,
-  },
-  vitalChipIcon: { fontSize: 16, marginBottom: 4 },
-  vitalChipVal: { fontSize: 13, fontWeight: '800', color: COLORS.text },
-  vitalChipLabel: { fontSize: 10, color: COLORS.muted, marginTop: 2 },
+  safe: { flex: 1, backgroundColor: '#F8FAFC' },
+  container: { padding: 20, flex: 1 },
+  title: { fontSize: 26, fontWeight: '800', color: '#1E293B', marginBottom: 20 },
+  searchBar: { flexDirection: 'row', backgroundColor: 'white', borderRadius: 15, padding: 8, marginBottom: 20, elevation: 2 },
+  input: { flex: 1, paddingHorizontal: 15, fontSize: 16 },
+  searchBtn: { backgroundColor: '#2563EB', padding: 12, borderRadius: 12 },
+  item: { backgroundColor: 'white', borderRadius: 15, padding: 16, marginBottom: 12, elevation: 1 },
+  itemHeader: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  dot: { width: 10, height: 10, borderRadius: 5 },
+  itemDate: { fontSize: 12, color: '#94A3B8', fontWeight: '600' },
+  itemDiag: { fontSize: 15, color: '#1E293B', fontWeight: '700' },
+  itemBody: { marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: '#F1F5F9' },
+  fullDiag: { fontSize: 14, color: '#64748B', lineHeight: 20, marginBottom: 10 },
+  vitalsRow: { flexDirection: 'row', gap: 15 },
+  vitalText: { fontSize: 13, fontWeight: '700', color: '#1E293B' },
+  empty: { textAlign: 'center', color: '#94A3B8', marginTop: 40 }
 });

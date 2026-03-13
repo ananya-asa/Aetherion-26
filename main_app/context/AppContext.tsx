@@ -30,6 +30,7 @@ export interface UserProfile {
   smoking?: boolean;
   alcohol?: boolean;
   sugarIntake?: string;
+  language?: string;
 }
 
 interface AppContextType {
