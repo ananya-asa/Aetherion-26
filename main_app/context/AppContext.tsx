@@ -34,8 +34,10 @@ export interface UserProfile {
 
 interface AppContextType {
   bleConnected: boolean;
+  setBleConnected: (val: boolean) => void; // Added
   toggleBLE: () => void;
   vitals: Vitals;
+  setVitals: (v: Vitals) => void; // Added
   diagnosisResult: DiagnosisResult | null;
   loading: boolean;
   analyzeSymptoms: (symptoms: string[], notes: string) => Promise<void>;
@@ -75,7 +77,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       : 'No hardware vitals available.';
 
     const profileText = userProfile.name
-      ? `Age: ${userProfile.age}, Gender: ${userProfile.gender}, BMI: ${userProfile.bmi || 'N/A'}, Height: ${userProfile.height || 'N/A'}cm, Weight: ${userProfile.weight || 'N/A'}kg, Profession: ${userProfile.profession || 'N/A'}, Married: ${userProfile.married ? 'Yes' : 'No'}, Sleep: ${userProfile.sleep || 'N/A'}, Exercise: ${userProfile.exercise || 'N/A'}, Smoking: ${userProfile.smoking ? 'Yes' : 'No'}, Alcohol: ${userProfile.alcohol ? 'Yes' : 'No'}, Sugar intake: ${userProfile.sugarIntake || 'N/A'}, Medical conditions: ${userProfile.conditions || 'None'}`
+      ? `Age: ${userProfile.age}, Gender: ${userProfile.gender}, BMI: ${userProfile.bmi || 'N/A'}, Medical conditions: ${userProfile.conditions || 'None'}`
       : 'No profile provided.';
 
     try {
@@ -95,19 +97,25 @@ export function AppProvider({ children }: { children: ReactNode }) {
     } catch (err) {
       setDiagnosisResult({
         severity: 'mild',
-        diagnosis: 'Unable to reach AI service. Check your connection and try again.',
-        action: 'Retry the analysis or consult a healthcare professional directly.',
+        diagnosis: 'Unable to reach AI service.',
+        action: 'Retry or consult a doctor.',
       });
     }
-
     setLoading(false);
   };
 
   return (
     <AppContext.Provider value={{
-      bleConnected, toggleBLE, vitals,
-      diagnosisResult, loading, analyzeSymptoms,
-      userProfile, setUserProfile,
+      bleConnected, 
+      setBleConnected, // Exported to context
+      toggleBLE, 
+      vitals, 
+      setVitals, // Exported to context
+      diagnosisResult, 
+      loading, 
+      analyzeSymptoms,
+      userProfile, 
+      setUserProfile,
     }}>
       {children}
     </AppContext.Provider>
